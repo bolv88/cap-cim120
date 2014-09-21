@@ -1,0 +1,13 @@
+role :web, "yubo@test-web", "yubo@main-web"
+role :db, "yubo@mysql-master", "yubo@mysql-slave"
+set :gateway, "main-web"
+
+task :search_libs, :hosts => "test-web" do
+      run "ls -x1 /tmp"
+end
+#
+desc "count-libs"
+#task :count_libs, :roles => [:web, :db] do
+task :count_libs, :roles => :web do
+      run "ls -x1 /tmp| wc -l"
+end
