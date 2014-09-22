@@ -3,7 +3,7 @@ tag = ENV["TAG"] || nil
 if !tag
     set :repository,  "svn://yubo@main-web/cim-public/trunk"
 else
-    set :repository,  "svn://yubo@main-web/cim-public/tag/#{tag}"
+    set :repository,  "svn://yubo@main-web/cim-public/tags/#{tag}"
 end
 
 set :scm, :subversion
@@ -15,14 +15,15 @@ set :deploy_to, "/u"
 # set :scm, :git # You can set :scm explicitly or Capistrano will make an intelligent guess based on known version control directory names
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
-role :app, "yubo@test-web", "yubo@sub-web", "yubo@main-web"# Your HTTP server, Apache/etc
+role :product,  "yubo@sub-web", "yubo@main-web"# Your HTTP server, Apache/etc
+role :test, "yubo@test-web"
 
 set :keep_releases, 50
 # Default value for :linked_files is []
-# set :linked_files, %w{config/database.yml}
+set :site_linked_files, %w{app/config/app.php app/config/cache.php app/config/database.php app/config/session.php}
 
 # Default value for linked_dirs is []
-# set :linked_dirs, %w{bin log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
+set :site_linked_dirs, %w{public/head_photos}
 
 
 # if you want to clean up old releases on each deploy uncomment this:
@@ -42,22 +43,33 @@ after "deploy:setup", "deploy:chmod_setup"
 # end
 namespace :deploy do
     task :upload_config do
-        puts "previous_release: "+previous_release
+        puts "previous_release: "+previous_release if previous_release
         puts "current_path: "+current_path
-
-        target_dir = "shared/site_config"
-        top.run("mkdir -p #{target_dir}")
-        top.upload("site_config", "shared/site_config")
+        all_files = Dir.glob("site_config/**/*").select{|f| File.file?(f)}
+        all_files.each{|f|
+          target_dir = "#{deploy_to}/shared/#{f}"
+          top.run("mkdir -p `dirname #{target_dir}`")
+          top.upload(f, target_dir)
+        }
     end
 
     desc "mkdir dir has a+w permission"
     task :chmod_setup do
-        top.run("#{try_sudo} chmod -R a+w #{deploy_to}")
+      top.run("#{try_sudo} chmod -R a+w #{deploy_to}")
     end
 
     task :finalize_update, :except => { :no_release => true } do
-        puts "previous_release: "+previous_release
-        puts "current_release: "+current_release
-        puts "current_path: "+current_path
+      shells = []
+      site_linked_files.each{|file|
+        from = "#{deploy_to}/shared/site_config/#{file}"
+        to = "#{current_release}/#{file}"
+        shells << "rm -rf #{to} && ln -s #{from} #{to}"
+      }
+      site_linked_dirs.each{|dir|
+        from = "#{deploy_to}/shared/#{dir}"
+        to = "#{current_release}/#{dir}"
+        shells << "rm -rf #{to} && ln -s #{from} #{to}"
+      }
+      top.run(shells.join(" && ")) if shells.count > 0
     end
 end
