@@ -1,4 +1,4 @@
-set :application, "test-web"
+set :application, "cloud.cim120.com.cn"
 tag = ENV["TAG"] || nil
 if !tag
     set :repository,  "svn://yubo@main-web/cim-public/trunk"
@@ -9,9 +9,9 @@ end
 set :scm, :subversion
 #set :scm_username, "yubo "
 set :scm_password, "cim120.yb.qwe" 
-set :use_sudo, true
+set :use_sudo, false
 
-set :deploy_to, "/u"
+set :deploy_to, "/data0/www/#{application}"
 # set :scm, :git # You can set :scm explicitly or Capistrano will make an intelligent guess based on known version control directory names
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
@@ -23,12 +23,13 @@ set :keep_releases, 50
 set :site_linked_files, %w{app/config/app.php app/config/cache.php app/config/database.php app/config/session.php}
 
 # Default value for linked_dirs is []
-set :site_linked_dirs, %w{public/head_photos}
+set :site_linked_dirs, [["/data0/head_photos", "public/head_photos"]]
 
 
 # if you want to clean up old releases on each deploy uncomment this:
 after "deploy:restart", "deploy:cleanup"
 after "deploy:setup", "deploy:chmod_setup"
+after "deploy:setup", "deploy:upload_config"
 
 # if you're still using the script/reaper helper you will need
 # these http://github.com/rails/irs_process_scripts
@@ -65,8 +66,10 @@ namespace :deploy do
         to = "#{current_release}/#{file}"
         shells << "rm -rf #{to} && ln -s #{from} #{to}"
       }
-      site_linked_dirs.each{|dir|
-        from = "#{deploy_to}/shared/#{dir}"
+      site_linked_dirs.each{|dirs|
+        (from, dir) = dirs
+        dir = from if not dir
+        from = "#{deploy_to}/shared/#{from}" if not from.start_with? "/"
         to = "#{current_release}/#{dir}"
         shells << "rm -rf #{to} && ln -s #{from} #{to}"
       }
