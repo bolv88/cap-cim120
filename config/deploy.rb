@@ -73,6 +73,8 @@ namespace :deploy do
         to = "#{current_release}/#{dir}"
         shells << "rm -rf #{to} && ln -s #{from} #{to}"
       }
+      shells << "cd #{current_release} && php artisan optimize"
       top.run(shells.join(" && ")) if shells.count > 0
+
     end
 end
