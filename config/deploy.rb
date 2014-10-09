@@ -1,9 +1,11 @@
 set :application, "cloud.cim120.com.cn"
+set :ssh_username, "yubo"
+
 tag = ENV["TAG"] || nil
 if !tag
-    set :repository,  "svn://yubo@main-web/cim-public/trunk"
+    set :repository,  "svn://#{ssh_username}@main-web/cim-public/trunk"
 else
-    set :repository,  "svn://yubo@main-web/cim-public/tags/#{tag}"
+    set :repository,  "svn://#{ssh_username}@main-web/cim-public/tags/#{tag}"
 end
 
 set :scm, :subversion
@@ -15,8 +17,8 @@ set :deploy_to, "/data0/www/#{application}"
 # set :scm, :git # You can set :scm explicitly or Capistrano will make an intelligent guess based on known version control directory names
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
-role :product,  "yubo@sub-web", "yubo@main-web"# Your HTTP server, Apache/etc
-role :test, "yubo@test-web"
+role :product,  "#{ssh_username}@sub-web", "#{ssh_username}@main-web"# Your HTTP server, Apache/etc
+role :test, "#{ssh_username}@test-web"
 
 set :keep_releases, 50
 # Default value for :linked_files is []
