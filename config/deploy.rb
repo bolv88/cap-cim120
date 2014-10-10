@@ -1,4 +1,4 @@
-set :application, "cloud.cim120.com.cn"
+set :application, "icloud.cim120.com.cn"
 set :ssh_username, "yubo"
 
 tag = ENV["TAG"] || nil
@@ -76,6 +76,7 @@ namespace :deploy do
         shells << "rm -rf #{to} && ln -s #{from} #{to}"
       }
       shells << "cd #{current_release} && php artisan optimize"
+      shells << "chmod -R a+w #{current_release}/app/storage"
       top.run(shells.join(" && ")) if shells.count > 0
 
     end
